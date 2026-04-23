@@ -2,6 +2,12 @@
 
 A SwiftUI sample app demonstrating iOS Live Activities with Dynamic Island and Lock Screen presentations using ActivityKit.
 
+## Demo
+
+| Delivery Tracker | Sports Score |
+|:---:|:---:|
+| <img src="Screenshots/screenshot_delivery.jpg" alt="Delivery Live Activity screenshot" width="300" /> | <!-- TODO: add Screenshots/screenshot_sports.jpg --><img src="Screenshots/screenshot_sports.jpg" alt="Sports Live Activity screenshot" width="300" /> |
+
 ## Features
 
 ### 1. Delivery Tracker
@@ -26,19 +32,24 @@ Each demo provides four presentation modes:
 
 ## Architecture
 
+Lightweight MVVM.
+
 | Layer | Description |
 |-------|-------------|
-| **Models** | `DemoType` enum for navigation |
-| **Views** | Demo views managing Live Activity lifecycle via `@State` |
-| **Shared** | `ActivityAttributes` definitions (compiled into both targets) |
+| **Models** | `DemoType` enum for navigation; `LiveActivityHelper` for cross-type cleanup |
+| **ViewModels** | `@Observable` classes that own Live Activity lifecycle (request / update / end) and simulation timers |
+| **Views** | SwiftUI demo screens plus reusable subviews (status card, scoreboard, workout card, stat item) |
+| **Shared** | `ActivityAttributes`, `DeliveryStatus`, `WorkoutType` — compiled into both app and widget targets |
 | **Widget Extension** | `ActivityConfiguration` with Dynamic Island + Lock Screen UIs |
 
 ### Data Flow
 
 ```
-App (Demo Views)
-  --> ActivityKit API (request / update / end)
-    --> Widget Extension (ActivityConfiguration renders UI)
+View → @Observable ViewModel
+         ↓
+    ActivityKit API (request / update / end)
+         ↓
+    Widget Extension (ActivityConfiguration renders UI)
 ```
 
 ## Key Technologies
@@ -51,39 +62,45 @@ App (Demo Views)
 ## Requirements
 
 - iOS 17.0+
-- Xcode 16+
-- Swift 6
-
-## Build & Test
-
-```bash
-# Build
-xcodebuild -project LiveActivityDemo.xcodeproj -scheme LiveActivityDemo -sdk iphonesimulator build
-
-# Run unit tests
-xcodebuild -project LiveActivityDemo.xcodeproj -scheme LiveActivityDemo -sdk iphonesimulator test
-```
+- Xcode 26.4
+- Swift 5 language mode
 
 ## Project Structure
 
 ```
 LiveActivityDemo/
-  LiveActivityDemoApp.swift       # App entry point
-  ContentView.swift               # Navigation to 3 demos
-  Models/DemoType.swift           # Demo type enum
+  LiveActivityDemoApp.swift            # App entry point
+  ContentView.swift                    # Navigation to 3 demos
+  Models/
+    DemoType.swift                     # Demo type enum (title/subtitle/icon/color)
+    LiveActivityHelper.swift           # Ends any in-flight Live Activity across types
+  ViewModels/
+    DeliveryDemoViewModel.swift        # Delivery lifecycle + auto-advance timer
+    SportsScoreDemoViewModel.swift     # Sports lifecycle + scoring logic
+    WorkoutTimerDemoViewModel.swift    # Workout lifecycle + simulated stats
   Views/
-    DeliveryDemoView.swift        # Delivery tracker controls
-    SportsScoreDemoView.swift     # Sports score controls
-    WorkoutTimerDemoView.swift    # Workout timer controls
+    DeliveryDemoView.swift             # Delivery tracker screen
+    DeliveryStatusCard.swift           # Reusable delivery status card
+    SportsScoreDemoView.swift          # Sports score screen
+    ScoreboardView.swift               # Reusable scoreboard
+    TeamColumnView.swift               # Reusable team column
+    WorkoutTimerDemoView.swift         # Workout timer screen
+    WorkoutCard.swift                  # Reusable workout summary card
+    StatItemView.swift                 # Reusable labeled stat tile
   Shared/
-    DeliveryAttributes.swift      # Delivery Live Activity attributes
-    SportsGameAttributes.swift    # Sports game Live Activity attributes
-    WorkoutAttributes.swift       # Workout Live Activity attributes
+    DeliveryAttributes.swift           # Delivery ActivityAttributes
+    DeliveryStatus.swift               # Delivery status enum (4 stages)
+    SportsGameAttributes.swift         # Sports game ActivityAttributes
+    WorkoutAttributes.swift            # Workout ActivityAttributes
+    WorkoutType.swift                  # Workout type enum (running/cycling/swimming)
 
 LiveActivityDemoWidget/
-  LiveActivityDemoWidgetBundle.swift  # Widget bundle entry point
+  LiveActivityDemoWidgetBundle.swift   # Widget bundle entry point
   LiveActivities/
-    DeliveryLiveActivity.swift        # Delivery Dynamic Island + Lock Screen
-    SportsGameLiveActivity.swift      # Sports Dynamic Island + Lock Screen
-    WorkoutLiveActivity.swift         # Workout Dynamic Island + Lock Screen
+    DeliveryLiveActivity.swift         # Delivery Dynamic Island + Lock Screen
+    SportsGameLiveActivity.swift       # Sports Dynamic Island + Lock Screen
+    WorkoutLiveActivity.swift          # Workout Dynamic Island + Lock Screen
+
+LiveActivityDemoTests/                 # Swift Testing unit tests
+LiveActivityDemoUITests/               # XCTest / XCUIAutomation UI tests
 ```
